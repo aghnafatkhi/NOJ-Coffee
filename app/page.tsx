@@ -142,7 +142,7 @@ export default function Home() {
           >
             <div className="w-full md:w-3/4">
               <motion.p variants={itemVariants} className="font-sans text-[10px] md:text-xs font-semibold tracking-[0.25em] uppercase opacity-70 mb-8 flex items-center gap-4">
-                Est. December 2020 <span className="w-8 h-[1px] bg-white/30 block"></span> Cileungsi, Bogor
+                Est. 5 December 2020 <span className="w-8 h-[1px] bg-white/30 block"></span> Cileungsi, Bogor
               </motion.p>
               
               <motion.h1 variants={itemVariants} className="font-display text-[clamp(48px,12vw,120px)] leading-[0.85] tracking-tight mb-8">
@@ -176,7 +176,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.5, duration: 1 }}
-            className="absolute bottom-10 left-6 md:left-12 flex flex-col items-center gap-4 opacity-50"
+            className="absolute bottom-10 left-6 md:left-12 hidden md:flex flex-col items-center gap-4 opacity-50"
           >
             <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ writingMode: 'vertical-rl' }}>Scroll</span>
             <div className="w-[1px] h-12 bg-gradient-to-b from-white/50 to-transparent"></div>
@@ -195,7 +195,7 @@ export default function Home() {
               &quot;Kamu nggak perlu overthinking soal kopi. Kami yang sudah mikirin semuanya.&quot;
             </motion.h2>
             <motion.p variants={itemVariants} className="font-sans text-white/60 max-w-2xl mx-auto text-sm md:text-base leading-relaxed font-light">
-              We focus on the essentials. A calm, Japanese-inspired space serving thoughtfully crafted coffee. Perfect for laptop workers, students, and anyone who needs a quiet corner to breathe and recharge.
+              Penuh rasa syukur memasuki tahun ke-4 sejak pertama berdiri pada 5 Desember 2020. Sebuah ruang tenang berkonsep minimalis Jepang yang menyajikan ragam menu kopi dan makanan, didedikasikan untuk para <span className="italic text-white">Nakama</span> (sebutan untuk pelanggan kami). Cocok untuk bekerja dengan laptop, atau rehat sejenak dari riuhnya isi pikiran.
             </motion.p>
           </motion.div>
         </section>
@@ -329,7 +329,20 @@ export default function Home() {
             <div className="mb-16">
               <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#F5F0E8]/70 mb-4">Catering Services</p>
               <h2 className="font-display text-4xl md:text-5xl font-light text-white mb-6 tracking-tight">Bawa NOJ ke Acaramu</h2>
-              <p className="font-sans text-white/60 font-light text-sm md:text-base max-w-md">Layanan katering kopi untuk area Jabodetabek. Sempurna untuk wedding, corporate event, atau family gathering. Minimum 200 cup.</p>
+              <p className="font-sans text-white/60 font-light text-sm md:text-base max-w-2xl mb-8">Layanan katering kopi untuk area Jabodetabek. Sangat cocok untuk menemani event pernikahan, gathering kantor, maupun acara keluarga. Minimum order 200 cup. Kamu juga boleh <span className="text-[#F5F0E8] font-medium border-b border-[#F5F0E8]/30 pb-0.5">meminta sample</span> untuk dites rasanya!</p>
+              
+              <div className="grid md:grid-cols-2 gap-6 text-left mt-8">
+                <div className="bg-white/[0.02] border border-white/10 p-6 rounded-xl relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[#F5F0E8]/50"></div>
+                  <h3 className="font-sans text-lg font-medium text-[#F5F0E8] mb-2 text-[15px]">1. Creamy Inanna</h3>
+                  <p className="font-sans text-[13px] text-white/60 font-light leading-relaxed">Kopi susu best-seller kami. Inanna yang berarti Dewi Cinta, digambarkan dengan rasa coklat-almond nikmat, layaknya orang menggambarkan cinta dengan sekotak coklat manis.</p>
+                </div>
+                <div className="bg-white/[0.02] border border-white/10 p-6 rounded-xl relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[#F5F0E8]/50"></div>
+                  <h3 className="font-sans text-lg font-medium text-[#F5F0E8] mb-2 text-[15px]">2. Kopi Susu Lollipop</h3>
+                  <p className="font-sans text-[13px] text-white/60 font-light leading-relaxed">Kopi susu terbaru NOJ COFFEE, eksklusif khusus event & online order. Terasa jelas sensasinya seperti memakan permen lollipop dengan balance rasa manis & gurih yang pas.</p>
+                </div>
+              </div>
             </div>
 
             <div className="overflow-x-auto pb-8">
@@ -490,6 +503,8 @@ export default function Home() {
              <h4 className="text-[11px] uppercase tracking-[0.2em] font-semibold text-white mb-6">Connect</h4>
              <ul className="space-y-4">
                <li><a href="https://www.instagram.com/noj.coffee/" target="_blank" rel="noreferrer" className="hover:text-[#F5F0E8] transition-colors inline-flex items-center gap-2"><Instagram size={14} /> Instagram</a></li>
+               <li><a href="https://www.tiktok.com/@noj.coffee" target="_blank" rel="noreferrer" className="hover:text-[#F5F0E8] transition-colors inline-flex items-center gap-2"><ExternalLink size={14} /> TikTok</a></li>
+               <li><a href="mailto:noj.coffee@gmail.com" target="_blank" rel="noreferrer" className="hover:text-[#F5F0E8] transition-colors inline-flex items-center gap-2"><ExternalLink size={14} /> Email Us</a></li>
                <li><a href="https://gofood.co.id/jakarta/restaurant/noj-coffee-metland-cileungsi-671e67e0-4383-4b07-bc10-a46b5712509a" target="_blank" rel="noreferrer" className="hover:text-[#F5F0E8] transition-colors inline-flex items-center gap-2"><ExternalLink size={14} /> GoFood</a></li>
                <li><a href="https://r.grab.com/g/2-1-6-C4NTVKEWEGAKNN" target="_blank" rel="noreferrer" className="hover:text-[#F5F0E8] transition-colors inline-flex items-center gap-2"><ExternalLink size={14} /> GrabFood</a></li>
                <li><a href="https://open.spotify.com/user/31ll2nnhc34yehbbhl4pjwmcmyli?si=m6egfnhBRqSiKQpVag9LCg" target="_blank" rel="noreferrer" className="hover:text-[#F5F0E8] transition-colors inline-flex items-center gap-2"><ExternalLink size={14} /> Spotify Playlist</a></li>
