@@ -192,7 +192,7 @@ export default function Home() {
             variants={heroVariants}
           >
             <motion.h2 variants={itemVariants} className="font-display text-3xl md:text-5xl lg:text-6xl leading-tight font-light mb-10 max-w-4xl mx-auto text-[#F5F0E8]">
-              &quot;Kamu nggak perlu overthinking soal kopi. Kami yang sudah mikirin semuanya.&quot;
+              &quot;Kerumitannya di kita, nikmatnya di lo.&quot;
             </motion.h2>
             <motion.p variants={itemVariants} className="font-sans text-white/60 max-w-2xl mx-auto text-sm md:text-base leading-relaxed font-light">
               Penuh rasa syukur memasuki tahun ke-4 sejak pertama berdiri pada 5 Desember 2020. Sebuah ruang tenang berkonsep minimalis Jepang yang menyajikan ragam menu kopi dan makanan, didedikasikan untuk para <span className="italic text-white">Nakama</span> (sebutan untuk pelanggan kami). Cocok untuk bekerja dengan laptop, atau rehat sejenak dari riuhnya isi pikiran.
