@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-sans antialiased bg-[#00001A] text-white selection:bg-[#F5F0E8] selection:text-[#00001A] overflow-x-hidden" suppressHydrationWarning>
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
