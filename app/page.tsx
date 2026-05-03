@@ -174,6 +174,7 @@ export default function Home() {
                 onClick={() => { setIsAnnVisible(false); sessionStorage.setItem('noj-ann-dismissed', 'true'); }}
                 className="p-1 hover:opacity-50 transition-opacity"
                 style={{ color: announcement.textColor || '#00001A' }}
+                aria-label="Tutup pengumuman"
               >
                 <XIcon size={14} />
               </button>
@@ -197,6 +198,7 @@ export default function Home() {
               alt="NOJ Coffee Logo" 
               width={140} 
               height={44} 
+              priority
               className={`h-11 w-auto brightness-0 invert transition-all duration-700 ${isScrolled ? 'scale-90 opacity-90' : 'scale-100 opacity-100'}`}
               referrerPolicy="no-referrer"
             />
@@ -219,7 +221,11 @@ export default function Home() {
               Order Now
             </a>
 
-            <button className="md:hidden p-2 text-white transition-opacity duration-700" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button 
+              className="md:hidden p-2 text-white transition-opacity duration-700" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"}
+            >
               {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
@@ -377,7 +383,11 @@ export default function Home() {
                       <a href={promo.ctaUrl || 'https://wa.me/6285179769148'} target="_blank" className="bg-[#F5F0E8] text-[#00001A] px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors">
                         {promo.ctaLabel || 'Ambil Promo'}
                       </a>
-                      <button onClick={() => handleShare(promo)} className="p-3 text-white/30 hover:text-[#F5F0E8] transition-colors">
+                      <button 
+                        onClick={() => handleShare(promo)} 
+                        className="p-3 text-white/30 hover:text-[#F5F0E8] transition-colors"
+                        aria-label="Bagikan promo"
+                      >
                         <Share2 size={18} />
                       </button>
                     </div>
@@ -734,7 +744,11 @@ export default function Home() {
               className="bg-[#F5F0E8] text-[#00001A] max-w-md w-full rounded-[40px] p-10 relative shadow-[0_32px_80px_rgba(245,240,232,0.15)] overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-8">
-                <button onClick={() => setIsFlashOpen(false)} className="bg-[#00001A] text-white p-2 rounded-full hover:scale-110 transition-transform">
+                <button 
+                  onClick={() => setIsFlashOpen(false)} 
+                  className="bg-[#00001A] text-white p-2 rounded-full hover:scale-110 transition-transform"
+                  aria-label="Tutup flash sale"
+                >
                   <XIcon size={20} />
                 </button>
               </div>
