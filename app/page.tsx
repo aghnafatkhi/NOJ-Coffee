@@ -1,9 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Phone, Clock, MapPin, Coffee, ArrowRight, Instagram, ExternalLink, Compass, Briefcase, Star, ChevronDown } from 'lucide-react';
+import { 
+  Menu, X, Phone, Clock, MapPin, Coffee, ArrowRight, Instagram, 
+  ExternalLink, Compass, Briefcase, Star, ChevronDown, 
+  Share2, Zap, Ticket, X as XIcon 
+} from 'lucide-react';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore';
+
+// --- FIREBASE CONFIGURATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDS6VcHcvyaZXyphl3aQsdP-r6In99pkzo",
+  authDomain: "gen-lang-client-0945400211.firebaseapp.com",
+  projectId: "gen-lang-client-0945400211",
+  storageBucket: "gen-lang-client-0945400211.firebasestorage.app",
+  messagingSenderId: "618096151814",
+  appId: "1:618096151814:web:b9efc3986e127e0c61e287"
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app, "ai-studio-404e307b-c79e-4906-bc69-4d43f4ff811d");
 
 const menuItems = [
   { name: "Manual Brew", desc: "Satoru Blend: 50% Kerinci Honey & 50% Gayo Full Wash", price: "20K–35K", category: "Coffee" },
@@ -43,13 +62,85 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("All");
 
+  // Real-time states for Promo System
+  const [promos, setPromos] = useState<any[]>([]);
+  const [announcement, setAnnouncement] = useState<any>(null);
+  const [isAnnVisible, setIsAnnVisible] = useState(false);
+  const [isFlashOpen, setIsFlashOpen] = useState(false);
+  const [currentFlash, setCurrentFlash] = useState<any>(null);
+  const [activePromoTab, setActivePromoTab] = useState('all');
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // 1. Fetch Announcement
+    const annUnsub = onSnapshot(doc(db, "announcement", "current"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        const now = new Date();
+        const expiresAt = data.expiresAt?.toDate();
+        const dismissed = sessionStorage.getItem('noj-ann-dismissed');
+        
+        if (data.isActive && expiresAt > now && !dismissed) {
+          setAnnouncement(data);
+          setIsAnnVisible(true);
+        } else {
+          setIsAnnVisible(false);
+        }
+      }
+    });
+
+    // 2. Fetch Promos
+    const promoQuery = query(collection(db, "promos"), orderBy("priority", "asc"));
+    const promoUnsub = onSnapshot(promoQuery, (snapshot) => {
+      const now = new Date();
+      const activePromos: any[] = [];
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const start = data.startDate?.toDate();
+        const end = data.endDate?.toDate();
+        if (data.isActive && now >= start && now <= end) {
+          activePromos.push({ id: docSnap.id, ...data });
+        }
+      });
+      setPromos(activePromos);
+      
+      // Handle Flash Sale
+      const flash = activePromos.find(p => p.type === 'flash');
+      if (flash && !sessionStorage.getItem(`noj-flash-${flash.id}`)) {
+        const timer = setTimeout(() => {
+          setCurrentFlash(flash);
+          setIsFlashOpen(true);
+          sessionStorage.setItem(`noj-flash-${flash.id}`, 'true');
+        }, 8000);
+        return () => clearTimeout(timer);
+      }
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      annUnsub();
+      promoUnsub();
+    };
   }, []);
+
+  const filteredPromos = useMemo(() => {
+    if (activePromoTab === 'all') return promos;
+    return promos.filter(p => p.type === activePromoTab);
+  }, [promos, activePromoTab]);
+
+  const handleShare = async (promo: any) => {
+    const text = `🌊 Promo NOJ Coffee: ${promo.title}\n${promo.discountLabel} — ${promo.description}\n📍 Cileungsi, Bogor\nOrder: ${promo.ctaUrl || 'wa.me/6285179769148'}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Promo NOJ Coffee', text }); } catch (err) {}
+    } else {
+      navigator.clipboard.writeText(text);
+      alert("Promo disalin ke clipboard! Share ke teman kamu ☕");
+    }
+  };
 
   const filteredItems = activeTab === "All" ? menuItems : menuItems.filter(i => i.category === activeTab);
 
@@ -65,6 +156,31 @@ export default function Home() {
 
   return (
     <div className="bg-[#00001A] min-h-screen text-white font-sans selection:bg-[#F5F0E8] selection:text-[#00001A]">
+      {/* ANNOUNCEMENT BAR */}
+      <AnimatePresence>
+        {isAnnVisible && announcement && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="fixed top-0 left-0 w-full z-[110] overflow-hidden"
+            style={{ backgroundColor: announcement.bgColor || '#F5F0E8' }}
+          >
+            <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between gap-4">
+              <span className="flex-1 text-center text-[11px] md:text-sm font-medium tracking-wide" style={{ color: announcement.textColor || '#00001A' }}>
+                🎉 {announcement.message}
+              </span>
+              <button 
+                onClick={() => { setIsAnnVisible(false); sessionStorage.setItem('noj-ann-dismissed', 'true'); }}
+                className="p-1 hover:opacity-50 transition-opacity"
+                style={{ color: announcement.textColor || '#00001A' }}
+              >
+                <XIcon size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* BACKGROUND NOISE TEXTURE */}
       <div className="fixed inset-0 pointer-events-none bg-noise opacity-80 z-0"></div>
 
@@ -199,6 +315,78 @@ export default function Home() {
             </motion.p>
           </motion.div>
         </section>
+
+        {/* PROMO SECTION */}
+        <AnimatePresence>
+          {promos.length > 0 && (
+            <section id="promos" className="py-24 px-6 md:px-12 max-w-7xl mx-auto overflow-hidden">
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12"
+              >
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-[#F5F0E8]/70 mb-3">Event & Offers</p>
+                  <h2 className="font-display text-4xl md:text-6xl font-light text-[#F5F0E8] tracking-tight">Edisi Nakama.</h2>
+                </div>
+                <div className="flex bg-white/5 p-1 rounded-full border border-white/10">
+                  {['all', 'event', 'flash', 'seasonal'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActivePromoTab(tab)}
+                      className={`px-4 py-1.5 rounded-full text-[10px] uppercase font-bold tracking-widest transition-all ${
+                        activePromoTab === tab ? 'bg-[#F5F0E8] text-[#00001A]' : 'text-white/60 hover:text-white'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredPromos.map((promo, idx) => (
+                  <motion.div 
+                    key={promo.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="group bg-white/[0.03] border border-white/10 rounded-3xl p-8 relative overflow-hidden hover:border-white/30 transition-all flex flex-col h-full"
+                  >
+                    {/* Badge */}
+                    <div className="absolute top-6 right-6">
+                      <span 
+                        className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-black shadow-xl"
+                        style={{ backgroundColor: promo.badgeColor || '#F5F0E8' }}
+                      >
+                        {promo.discountLabel}
+                      </span>
+                    </div>
+
+                    <div className="mb-8 p-3 bg-white/5 rounded-2xl inline-block w-fit">
+                      {promo.type === 'flash' ? <Zap className="text-[#F5F0E8]" size={24} /> : <Ticket className="text-[#F5F0E8]" size={24} />}
+                    </div>
+
+                    <h3 className="font-display text-2xl mb-2 text-white group-hover:text-[#F5F0E8] transition-colors">{promo.title}</h3>
+                    {promo.subtitle && <p className="text-[#F5F0E8]/70 text-xs font-semibold mb-4 tracking-wide uppercase">{promo.subtitle}</p>}
+                    <p className="text-white/50 text-sm font-light leading-relaxed mb-8 flex-grow">{promo.description}</p>
+
+                    <div className="flex items-center justify-between gap-4 py-4 border-t border-white/5 mt-auto">
+                      <a href={promo.ctaUrl || 'https://wa.me/6285179769148'} target="_blank" className="bg-[#F5F0E8] text-[#00001A] px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors">
+                        {promo.ctaLabel || 'Ambil Promo'}
+                      </a>
+                      <button onClick={() => handleShare(promo)} className="p-3 text-white/30 hover:text-[#F5F0E8] transition-colors">
+                        <Share2 size={18} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+          )}
+        </AnimatePresence>
 
         {/* QUICK INFO STRIP */}
         <section className="border-y border-white/10 py-12 bg-white/[0.02]">
@@ -526,9 +714,59 @@ export default function Home() {
 
         <div className="max-w-7xl mx-auto pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-light text-white/30">
           <p>© 2025 NOJ Coffee. All rights reserved.</p>
-          <p>Made with ☕ in Cileungsi</p>
+          <div className="flex items-center gap-6">
+            <a href="/admin.html" className="hover:text-[#F5F0E8] transition-colors opacity-50 hover:opacity-100 flex items-center gap-1">
+              <Star size={10} /> Staff Login
+            </a>
+            <p>Made with ☕ in Cileungsi</p>
+          </div>
         </div>
       </footer>
+
+      {/* FLASH SALE POPUP */}
+      <AnimatePresence>
+        {isFlashOpen && currentFlash && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-[#00001A]/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="bg-[#F5F0E8] text-[#00001A] max-w-md w-full rounded-[40px] p-10 relative shadow-[0_32px_80px_rgba(245,240,232,0.15)] overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8">
+                <button onClick={() => setIsFlashOpen(false)} className="bg-[#00001A] text-white p-2 rounded-full hover:scale-110 transition-transform">
+                  <XIcon size={20} />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-[#00001A] text-[#F5F0E8] p-2 rounded-lg animate-pulse">
+                  <Zap size={24} fill="currentColor" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-[0.3em] opacity-60">Limited Offer</span>
+              </div>
+
+              <h2 className="font-display text-5xl leading-none mb-6 tracking-tight">
+                {currentFlash.title}
+              </h2>
+              <p className="text-2xl font-display italic mb-8 opacity-70">
+                {currentFlash.discountLabel}
+              </p>
+              <p className="font-sans text-base opacity-60 mb-10 leading-relaxed">
+                {currentFlash.description}
+              </p>
+
+              <a 
+                href={currentFlash.ctaUrl || 'https://wa.me/6285179769148'} 
+                target="_blank"
+                className="block w-full bg-[#00001A] text-white text-center py-5 rounded-2xl font-bold uppercase tracking-widest hover:scale-[1.02] transition-transform shadow-xl shadow-black/10"
+              >
+                {currentFlash.ctaLabel || 'Klaim Sekarang'}
+              </a>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

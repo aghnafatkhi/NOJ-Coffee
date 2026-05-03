@@ -84,12 +84,12 @@
   FIREBASE CONFIGURATION
 */
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDS6VcHcvyaZXyphl3aQsdP-r6In99pkzo",
+  authDomain: "gen-lang-client-0945400211.firebaseapp.com",
+  projectId: "gen-lang-client-0945400211",
+  storageBucket: "gen-lang-client-0945400211.firebasestorage.app",
+  messagingSenderId: "618096151814",
+  appId: "1:618096151814:web:b9efc3986e127e0c61e287"
 };
 
 /*
@@ -110,17 +110,44 @@ const firebaseConfig = {
 */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, getDocFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 (() => {
   let db;
   try {
     const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
+    db = getFirestore(app, "ai-studio-404e307b-c79e-4906-bc69-4d43f4ff811d");
   } catch (err) {
     console.warn("[NOJ Promo] Firebase error. Check configuration.");
     return;
   }
+
+  // Error Handling Infrastructure
+  const OperationType = {
+    GET: 'get',
+    LIST: 'list',
+  };
+
+  function handleFirestoreError(error, operationType, path) {
+    const errInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      operationType,
+      path
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+  }
+
+  // Validate Connection
+  async function testConnection() {
+    try {
+      await getDocFromServer(doc(db, 'test', 'connection'));
+    } catch (error) {
+      if(error instanceof Error && error.message.includes('offline')) {
+        console.error("Please check your Firebase configuration.");
+      }
+    }
+  }
+  testConnection();
 
   const elements = {
     announcementBar: document.getElementById('noj-promo-announcement'),
@@ -303,7 +330,8 @@ import { getFirestore, collection, onSnapshot, query, orderBy, doc } from "https
   }
 
   function loadPromosData() {
-    onSnapshot(query(collection(db, "promos"), orderBy("priority", "asc")), (snapshot) => {
+    const path = "promos";
+    onSnapshot(query(collection(db, path), orderBy("priority", "asc")), (snapshot) => {
         const now = new Date().getTime();
         let activePromos = [], flashPromos = [];
         snapshot.forEach(docSnap => {
@@ -336,13 +364,14 @@ import { getFirestore, collection, onSnapshot, query, orderBy, doc } from "https
             if (flashPromos.length > 0) triggerFlashSale(flashPromos[0]);
         }
     }, (error) => {
-        console.error("[NOJ Promo] Error: ", error);
+        handleFirestoreError(error, OperationType.LIST, path);
         if(elements.promoSection) elements.promoSection.classList.add('hidden');
     });
   }
 
   function loadAnnouncementData() {
     if(!elements.announcementBar) return;
+    const path = "announcement/current";
     onSnapshot(doc(db, "announcement", "current"), (docSnap) => {
         if (!docSnap.exists()) return;
         const data = docSnap.data();
@@ -357,6 +386,8 @@ import { getFirestore, collection, onSnapshot, query, orderBy, doc } from "https
         } else {
             elements.announcementBar.classList.add('hidden'); elements.announcementBar.classList.remove('flex');
         }
+    }, (error) => {
+        handleFirestoreError(error, OperationType.GET, path);
     });
 
     elements.announcementClose.addEventListener('click', () => {

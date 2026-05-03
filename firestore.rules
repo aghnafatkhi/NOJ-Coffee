@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 0.1 Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerified() && request.auth.token.email == 'aghna1011@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 1. Promo Validation
+    function isValidPromo(data) {
+      return data.keys().hasAll(['title', 'description', 'discountLabel', 'startDate', 'endDate', 'type', 'priority', 'isActive'])
+        && data.title is string && data.title.size() <= 100
+        && data.description is string && data.description.size() <= 1000
+        && data.discountLabel is string && data.discountLabel.size() <= 50
+        && data.startDate is timestamp
+        && data.endDate is timestamp
+        && data.priority is int
+        && data.isActive is bool
+        && data.type in ['event', 'flash', 'seasonal', 'loyalty']
+        && (!('promoCode' in data) || (data.promoCode is string && data.promoCode.size() <= 20))
+        && (!('subtitle' in data) || (data.subtitle is string && data.subtitle.size() <= 100))
+        && (!('ctaLabel' in data) || (data.ctaLabel is string && data.ctaLabel.size() <= 50))
+        && (!('ctaUrl' in data) || (data.ctaUrl is string && data.ctaUrl.size() <= 2000))
+        && (!('applyToItems' in data) || (data.applyToItems is list && data.applyToItems.size() <= 20))
+        && (!('loyaltyProgress' in data) || (data.loyaltyProgress is int && data.loyaltyProgress >= 0 && data.loyaltyProgress <= 10));
+    }
+
+    // 2. Announcement Validation
+    function isValidAnnouncement(data) {
+      return data.keys().hasAll(['message', 'expiresAt', 'isActive'])
+        && data.message is string && data.message.size() <= 500
+        && data.isActive is bool
+        && data.expiresAt is timestamp
+        && (!('bgColor' in data) || (data.bgColor is string && data.bgColor.size() <= 7))
+        && (!('textColor' in data) || (data.textColor is string && data.textColor.size() <= 7));
+    }
+
+    // --- Collections ---
+
+    match /promos/{promoId} {
+      allow get: if true;
+      allow list: if true;
+      
+      allow create: if isAdmin() && isValidId(promoId) && isValidPromo(incoming()) 
+        && incoming().createdAt == request.time;
+        
+      allow update: if isAdmin() && isValidPromo(incoming())
+        && (
+          // Action: Toggle Active
+          (incoming().diff(existing()).affectedKeys().hasOnly(['isActive'])) ||
+          // Action: Full Edit
+          (incoming().diff(existing()).affectedKeys().hasAll(['title', 'description']))
+        );
+        
+      allow delete: if isAdmin();
+    }
+
+    match /announcement/{docId} {
+      allow get: if true;
+      allow list: if true;
+
+      allow create, update: if isAdmin() && isValidId(docId) && isValidAnnouncement(incoming());
+      allow delete: if isAdmin();
+    }
+  }
+}

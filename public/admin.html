@@ -49,8 +49,17 @@
             <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">👁</button>
           </div>
         </div>
-        <div id="login-error" class="hidden text-red-500 text-sm py-1"></div>
+        <div id="login-error" class="hidden text-red-500 text-sm py-1 text-center"></div>
         <button type="submit" id="login-btn" class="w-full bg-[#00001A] text-white font-medium py-2.5 rounded-lg hover:bg-black transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-[#00001A]">Masuk</button>
+        <div class="relative py-2">
+          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+          <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-500">Atau</span></div>
+        </div>
+        <button type="button" id="google-login-btn" class="w-full bg-white border border-gray-200 text-gray-700 font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.712s.102-1.172.282-1.712V4.956H.957a8.996 8.996 0 000 8.088l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.956L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+          Google Login
+        </button>
+
       </form>
     </div>
   </div>
@@ -396,21 +405,65 @@
 
   <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, Timestamp, getDocFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDS6VcHcvyaZXyphl3aQsdP-r6In99pkzo",
+    authDomain: "gen-lang-client-0945400211.firebaseapp.com",
+    projectId: "gen-lang-client-0945400211",
+    storageBucket: "gen-lang-client-0945400211.firebasestorage.app",
+    messagingSenderId: "618096151814",
+    appId: "1:618096151814:web:b9efc3986e127e0c61e287"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = getFirestore(app, "ai-studio-404e307b-c79e-4906-bc69-4d43f4ff811d");
+
+// Error Handling Infrastructure
+const OperationType = {
+  CREATE: 'create',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  LIST: 'list',
+  GET: 'get',
+  WRITE: 'write',
+};
+
+function handleFirestoreError(error, operationType, path) {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+// Validate Connection
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('offline')) {
+      console.error("Please check your Firebase configuration.");
+    }
+  }
+}
+testConnection();
+
 
 // DOM Elements
 const els = {
@@ -512,6 +565,16 @@ els.loginForm.onsubmit = async (e) => {
     }
     btn.disabled = false; btn.textContent = 'Masuk';
 }
+
+document.getElementById('google-login-btn').onclick = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (err) {
+        els.loginErr.textContent = transErr(err.code);
+        els.loginErr.classList.remove('hidden');
+    }
+};
 document.getElementById('toggle-password').onclick = (e) => {
     const i = document.getElementById('login-password');
     if(i.type === 'password') { i.type = 'text'; e.target.textContent = '🔒'; }
@@ -555,16 +618,22 @@ function isoDateString(ts) {
 // Data Fetching
 function initData() {
     // Promos
-    onSnapshot(query(collection(db, "promos"), orderBy("priority", "asc")), (snap) => {
+    const promosPath = "promos";
+    onSnapshot(query(collection(db, promosPath), orderBy("priority", "asc")), (snap) => {
         rawPromos = [];
         snap.forEach(d => rawPromos.push({ id: d.id, ...d.data() }));
         renderDashboard();
         renderPromoList();
+    }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, promosPath);
     });
 
     // Announcement
+    const annPath = "announcement/current";
     onSnapshot(doc(db, "announcement", "current"), (d) => {
         if(d.exists()) renderAnnouncement(d.data());
+    }, (error) => {
+        handleFirestoreError(error, OperationType.GET, annPath);
     });
 }
 
@@ -657,11 +726,12 @@ document.getElementById('filter-search').addEventListener('input', renderPromoLi
 document.getElementById('filter-status').addEventListener('change', renderPromoList);
 
 window.togglePromoActive = async (id, val) => {
+    const p = "promos/" + id;
     try {
         await updateDoc(doc(db, "promos", id), { isActive: val });
         showToast("Disimpan ✓", `Promo ${val?'diaktifkan':'dinonaktifkan'}.`, "success");
     } catch(e) {
-        showToast("Error", "Gagal update status", "error");
+        handleFirestoreError(e, OperationType.UPDATE, p);
     }
 }
 
@@ -769,7 +839,7 @@ els.promoSaveBtn.onclick = async () => {
         }
         closeSlide();
     } catch(err) {
-        showToast("Error", "Gagal menyimpan promo", "error");
+        handleFirestoreError(err, id ? OperationType.UPDATE : OperationType.CREATE, id ? ("promos/"+id) : "promos");
     }
     els.promoSaveBtn.textContent = 'Simpan Promo';
     els.promoSaveBtn.disabled = false;
@@ -830,10 +900,13 @@ document.getElementById('confirm-yes').onclick = () => { if(confirmCallback) con
 
 window.prepDelete = (id) => {
     showDialog(async () => {
+        const p = "promos/" + id;
         try {
             await deleteDoc(doc(db, "promos", id));
             showToast("Dihapus", "Promo telah dihapus permanen", "success");
-        } catch(e) { showToast("Error", "Gagal hapus promo", "error"); }
+        } catch(e) { 
+            handleFirestoreError(e, OperationType.DELETE, p);
+        }
     });
 }
 
@@ -850,8 +923,9 @@ function renderAnnouncement(d) {
     tog.className = `px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${isAct ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-[#00001A] text-white border-transparent hover:bg-black'}`;
     tog.textContent = isAct ? 'Matikan Sekarang' : 'Aktifkan';
     tog.onclick = async () => {
+        const p = "announcement/current";
         try { await updateDoc(doc(db, "announcement", "current"), { isActive: !d.isActive });
-        } catch(e){ showToast("Error", "Gagal ubah status", "error"); }
+        } catch(e){ handleFirestoreError(e, OperationType.UPDATE, p); }
     };
     const c = document.getElementById('ann-toggle-container'); c.innerHTML=''; c.appendChild(tog);
 
@@ -880,6 +954,7 @@ els.annForm.onsubmit = async (e) => {
     const btn = document.getElementById('ann-submit-btn');
     btn.innerHTML = '<span class="loader"></span> Menyimpan...'; btn.disabled = true;
     
+    const p = "announcement/current";
     try {
         await setDoc(doc(db, "announcement", "current"), {
             message: document.getElementById('ann-message').value,
@@ -890,7 +965,7 @@ els.annForm.onsubmit = async (e) => {
         });
         showToast("Disimpan ✓", "Pengumuman tayang di website", "success");
     } catch(err) {
-        showToast("Error", "Gagal simpan pengumuman", "error");
+        handleFirestoreError(err, OperationType.WRITE, p);
     }
     btn.textContent = 'Simpan Pengumuman'; btn.disabled = false;
 }

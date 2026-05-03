@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "Promo": {
+      "title": "Promo",
+      "description": "Promo and event data for the website",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the promo" },
+        "subtitle": { "type": "string", "description": "Short subtitle" },
+        "description": { "type": "string", "description": "Detailed description" },
+        "discountLabel": { "type": "string", "description": "Discount text (e.g. Buy 1 Get 1)" },
+        "badgeColor": { "type": "string", "description": "Hex color for the badge" },
+        "startDate": { "type": "object", "format": "google.protobuf.Timestamp" },
+        "endDate": { "type": "object", "format": "google.protobuf.Timestamp" },
+        "applyToItems": { "type": "array", "items": { "type": "string" } },
+        "promoCode": { "type": "string", "description": "Optional promo code" },
+        "ctaLabel": { "type": "string", "description": "Call to action button text" },
+        "ctaUrl": { "type": "string", "description": "Call to action URL" },
+        "type": { "type": "string", "enum": ["event", "flash", "seasonal", "loyalty"] },
+        "loyaltyProgress": { "type": "number", "description": "Stamp count for loyalty type" },
+        "priority": { "type": "number", "description": "Display priority" },
+        "isActive": { "type": "boolean", "description": "Whether the promo is active" },
+        "createdAt": { "type": "object", "format": "google.protobuf.Timestamp" }
+      },
+      "required": ["title", "description", "discountLabel", "startDate", "endDate", "type", "priority", "isActive"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Site-wide announcement bar configuration",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string", "description": "Announcement message" },
+        "bgColor": { "type": "string", "description": "Background color" },
+        "textColor": { "type": "string", "description": "Text color" },
+        "expiresAt": { "type": "object", "format": "google.protobuf.Timestamp" },
+        "isActive": { "type": "boolean", "description": "Whether the bar is active" }
+      },
+      "required": ["message", "expiresAt", "isActive"]
+    }
+  },
+  "firestore": {
+    "/promos/{promoId}": {
+      "schema": "Promo",
+      "description": "Collection of all promos"
+    },
+    "/announcement/current": {
+      "schema": "Announcement",
+      "description": "Single document for currently active announcement"
+    }
+  }
+}
