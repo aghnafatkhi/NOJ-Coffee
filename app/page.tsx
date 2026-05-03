@@ -715,7 +715,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-light text-white/30">
           <p>© 2025 NOJ Coffee. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <a href="/admin.html" className="hover:text-[#F5F0E8] transition-colors opacity-50 hover:opacity-100 flex items-center gap-1">
+            <a href="/admin" className="hover:text-[#F5F0E8] transition-colors opacity-50 hover:opacity-100 flex items-center gap-1">
               <Star size={10} /> Staff Login
             </a>
             <p>Made with ☕ in Cileungsi</p>
