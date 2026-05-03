@@ -152,7 +152,7 @@ export default function Home() {
               
               <motion.p variants={itemVariants} className="font-sans text-lg md:text-xl font-light opacity-80 max-w-lg leading-relaxed mb-12 border-l border-white/20 pl-6">
                 Shiawase, Always! 🌊 <br className="hidden md:block"/>
-                A Japanese minimalist coffee experience in the heart of Cileungsi.
+                Ruang tenang bagi para Nakama di Cileungsi. Nikmati pengalaman kopi dalam suasana minimalis Jepang yang kontemplatif.
               </motion.p>
               
               <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -195,7 +195,7 @@ export default function Home() {
               &quot;Kerumitannya di kita, nikmatnya di lo.&quot;
             </motion.h2>
             <motion.p variants={itemVariants} className="font-sans text-white/60 max-w-2xl mx-auto text-sm md:text-base leading-relaxed font-light">
-              Penuh rasa syukur memasuki tahun ke-4 sejak pertama berdiri pada 5 Desember 2020. Sebuah ruang tenang berkonsep minimalis Jepang yang menyajikan ragam menu kopi dan makanan, didedikasikan untuk para <span className="italic text-white">Nakama</span> (sebutan untuk pelanggan kami). Cocok untuk bekerja dengan laptop, atau rehat sejenak dari riuhnya isi pikiran.
+              Memasuki tahun keempat perjalanan kami sejak berdiri pada 5 Desember 2020. NOJ Coffee hadir sebagai ruang tenang yang didedikasikan bagi para Nakama untuk fokus berkarya atau sekadar beristirahat sejenak dari kesibukan pikiran.
             </motion.p>
           </motion.div>
         </section>
@@ -305,7 +305,7 @@ export default function Home() {
             </motion.div>
             
             <motion.p variants={itemVariants} className="max-w-2xl font-sans text-lg text-black/60 font-light leading-relaxed mb-16">
-              Cocok untuk kerja sendiri dengan laptop, nongkrong bareng teman, atau sekadar diam dan menikmati. Outdoor seating tersedia. Free parking. WiFi-friendly atmosphere.
+              Suasana yang kondusif bagi Anda yang membutuhkan waktu untuk diri sendiri maupun fokus bekerja di depan laptop. Tersedia pula area outdoor untuk berbincang santai, didukung dengan lahan parkir yang luas dan koneksi WiFi yang stabil.
             </motion.p>
 
             <motion.div variants={itemVariants} className="flex flex-wrap justify-center gap-3">
@@ -329,7 +329,7 @@ export default function Home() {
             <div className="mb-16">
               <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#F5F0E8]/70 mb-4">Catering Services</p>
               <h2 className="font-display text-4xl md:text-5xl font-light text-white mb-6 tracking-tight">Bawa NOJ ke Acaramu</h2>
-              <p className="font-sans text-white/60 font-light text-sm md:text-base max-w-2xl mb-8">Layanan katering kopi untuk area Jabodetabek. Sangat cocok untuk menemani event pernikahan, gathering kantor, maupun acara keluarga. Minimum order 200 cup. Kamu juga boleh <span className="text-[#F5F0E8] font-medium border-b border-[#F5F0E8]/30 pb-0.5">meminta sample</span> untuk dites rasanya!</p>
+              <p className="font-sans text-white/60 font-light text-sm md:text-base max-w-2xl mb-8">Hadirkan suasana NOJ Coffee di berbagai momen spesial Anda. Kami menyediakan layanan katering kopi untuk wilayah Jabodetabek, mulai dari pernikahan, acara perkantoran, hingga kumpul keluarga. Tersedia paket dengan minimum order 200 cup dan opsi <span className="text-[#F5F0E8] font-medium border-b border-[#F5F0E8]/30 pb-0.5">permintaan sampel</span> untuk memastikan kualitas rasa pilihan Anda.</p>
               
               <div className="grid md:grid-cols-2 gap-6 text-left mt-8">
                 <div className="bg-white/[0.02] border border-white/10 p-6 rounded-xl relative overflow-hidden">
@@ -418,7 +418,7 @@ export default function Home() {
             >
               <Coffee className="text-[#F5F0E8] mb-6" size={32} strokeWidth={1} />
               <h3 className="font-display text-2xl font-light tracking-tight mb-3">NOJ Coffee</h3>
-              <p className="font-sans text-sm font-light text-white/50 leading-relaxed">Kedai kopi utama kami di Cileungsi. Ruang tenang berkonsep minimalis Jepang.</p>
+              <p className="font-sans text-sm font-light text-white/50 leading-relaxed">Pusat ekosistem kami di Cileungsi. Titik temu di mana setiap cangkir kopi disajikan dalam balutan minimalisme Jepang.</p>
             </motion.div>
             
             <motion.div 
@@ -427,7 +427,7 @@ export default function Home() {
             >
               <Briefcase className="text-[#F5F0E8] mb-6" size={32} strokeWidth={1} />
               <h3 className="font-display text-2xl font-light tracking-tight mb-3">NOJ Pintar</h3>
-              <p className="font-sans text-sm font-light text-white/50 leading-relaxed">Layanan afiliasi dan solusi bisnis NOJ yang membantu berbagai keperluan digital.</p>
+              <p className="font-sans text-sm font-light text-white/50 leading-relaxed">Solusi bisnis dan digital kami yang dirancang untuk membantu efisiensi operasional melalui ekosistem WhatsApp Pintar.</p>
             </motion.div>
             
             <motion.div 
@@ -436,7 +436,7 @@ export default function Home() {
             >
               <Compass className="text-[#F5F0E8] mb-6" size={32} strokeWidth={1} />
               <h3 className="font-display text-2xl font-light tracking-tight mb-3">NOJ Roastworks</h3>
-              <p className="font-sans text-sm font-light text-white/50 leading-relaxed">Inisiatif kami dalam menyajikan biji kopi dan peralatan seduh pilihan.</p>
+              <p className="font-sans text-sm font-light text-white/50 leading-relaxed">Kurasi biji kopi pilihan dan koleksi peralatan seduh berkualitas untuk pengalaman kopi terbaik di rumah Anda.</p>
             </motion.div>
           </div>
         </section>
@@ -450,9 +450,9 @@ export default function Home() {
              transition={{ duration: 0.8 }}
              className="max-w-4xl mx-auto"
           >
-            <h2 className="font-display text-5xl md:text-7xl font-light tracking-tight mb-6 text-[#00001A]">Siap Memesan?</h2>
+            <h2 className="font-display text-5xl md:text-7xl font-light tracking-tight mb-6 text-[#00001A]">Layanan Pesan Antar</h2>
             <p className="font-sans text-lg font-light text-[#00001A]/60 mb-12 max-w-xl mx-auto">
-              Tersedia di layanan antar makanan favorit Anda. Nikmati kopi kami kapan saja dan di mana saja.
+              Nikmati kopi NOJ kapan saja dan di mana saja. Kami tersedia di berbagai platform layanan antar makanan untuk kemudahan Anda.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -486,7 +486,7 @@ export default function Home() {
               />
             </div>
             <p className="text-[#F5F0E8] italic font-display text-lg mb-4">Shiawase, Always! 🌊</p>
-            <p className="leading-relaxed">Japanese minimalist coffee shop focused on mental peace and simplicity.</p>
+            <p className="leading-relaxed">Kedai kopi minimalis Jepang yang fokus pada ketenangan dan esensi rasa kopi. No Overthink, Just Coffee.</p>
           </div>
 
           <div>

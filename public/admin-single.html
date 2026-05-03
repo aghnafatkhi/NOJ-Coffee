@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>NOJ Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+     body { font-family: 'Inter', sans-serif; background-color: #F7F8FA; color: #111827; }
+     .noj-admin-slide-panel { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+     .slide-open { transform: translateX(0); }
+     .slide-closed { transform: translateX(100%); }
+     .loader { border: 2px solid rgba(255,255,255,0.3); border-left-color: white; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: text-bottom; margin-right: 4px;}
+     .loader-dark { border-color: rgba(0,0,0,0.1); border-left-color: #00001A; }
+     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+     .hide-scrollbar::-webkit-scrollbar { display: none; }
+     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+     
+     @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+     @keyframes slideInTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+     .toast-desktop { animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+     .toast-mobile { animation: slideInTop 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+     
+     .toggle-checkbox:checked { right: 0; border-color: #22C55E; }
+     .toggle-checkbox:checked + .toggle-label { background-color: #22C55E; }
+     .toggle-checkbox { right: 0; z-index: 1; border-color: #e5e7eb; transition: all 0.15s ease; }
+     .toggle-label { background-color: #e5e7eb; transition: all 0.15s ease; }
+  </style>
+</head>
+<body class="overflow-x-hidden">
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="fixed inset-0 bg-[#F7F8FA] z-[100] flex flex-col items-center justify-center p-6 transition-opacity duration-300">
+    <div class="w-full max-w-sm bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] border border-gray-100 p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold tracking-tight text-[#00001A]">NOJ Coffee</h1>
+        <p class="text-gray-500 text-sm mt-1">Admin Panel</p>
+      </div>
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="login-email" required class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#00001A] focus:ring-1 focus:ring-[#00001A] transition-colors">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <div class="relative">
+            <input type="password" id="login-password" required class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-[#00001A] focus:ring-1 focus:ring-[#00001A] transition-colors pr-10">
+            <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">👁</button>
+          </div>
+        </div>
+        <div id="login-error" class="hidden text-red-500 text-sm py-1"></div>
+        <button type="submit" id="login-btn" class="w-full bg-[#00001A] text-white font-medium py-2.5 rounded-lg hover:bg-black transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-[#00001A]">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="main-app" class="hidden min-h-screen flex-col md:flex-row opacity-0 transition-opacity duration-300">
+    
+    <!-- MOBILE HEADER -->
+    <div class="md:hidden sticky top-0 z-40 bg-white border-b border-gray-200 h-[60px] flex items-center justify-between px-4">
+       <div class="flex items-center gap-3">
+           <button id="mobile-menu-btn" class="p-1 -ml-1 text-gray-600"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+           <span class="font-semibold text-[#00001A]">NOJ Admin</span>
+       </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-black/20 z-40 hidden md:hidden"></div>
+    <aside id="sidebar" class="fixed md:sticky top-0 left-0 h-screen w-[240px] bg-white border-r border-gray-200 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col">
+       <div class="h-[60px] hidden md:flex items-center px-6 border-b border-gray-200">
+           <span class="font-bold text-lg text-[#00001A] tracking-tight">NOJ Admin</span>
+       </div>
+       <nav class="flex-1 py-4 px-3 space-y-1" id="nav-menu">
+           <a href="#dashboard" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" data-target="page-dashboard">
+               <span>📊</span> Dashboard
+           </a>
+           <a href="#promo" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" data-target="page-promo">
+               <span>🎁</span> Kelola Promo
+           </a>
+           <a href="#announcement" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" data-target="page-announcement">
+               <span>📢</span> Pengumuman
+           </a>
+           <a href="#settings" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" data-target="page-settings">
+               <span>⚙️</span> Pengaturan
+           </a>
+       </nav>
+       <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+           <span class="text-xs text-gray-400 font-medium">v1.0.0</span>
+           <button id="logout-btn" class="text-gray-500 hover:text-red-500 flex items-center gap-2 text-sm transition-colors text-right">
+              Logout
+           </button>
+       </div>
+    </aside>
+
+    <!-- CONTENT AREA -->
+    <main class="flex-1 max-w-[900px] w-full mx-auto p-6 md:p-10 pb-24">
+       <!-- DESKTOP HEADER (Email) -->
+       <div class="hidden md:flex justify-end items-center mb-10 h-8">
+           <span id="user-email-display" class="text-sm text-gray-500 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm"></span>
+       </div>
+
+       <!-- PAGE: DASHBOARD -->
+       <div id="page-dashboard" class="page-content space-y-8">
+           <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Dashboard</h2>
+           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <div class="bg-white p-5 rounded-[12px] border border-gray-200 shadow-sm">
+                   <div class="text-3xl font-bold text-gray-900 mb-1 flex items-baseline gap-2" id="stat-active"><span class="loader loader-dark"></span></div>
+                   <div class="text-sm text-gray-500 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span> Promo Aktif</div>
+               </div>
+               <div class="bg-white p-5 rounded-[12px] border border-gray-200 shadow-sm">
+                   <div class="text-3xl font-bold text-gray-900 mb-1 flex items-baseline gap-2" id="stat-upcoming"><span class="loader loader-dark"></span></div>
+                   <div class="text-sm text-gray-500 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> Promo Mendatang</div>
+               </div>
+               <div class="bg-white p-5 rounded-[12px] border border-gray-200 shadow-sm">
+                   <div class="text-3xl font-bold text-gray-900 mb-1 flex items-baseline gap-2" id="stat-expired"><span class="loader loader-dark"></span></div>
+                   <div class="text-sm text-gray-500 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-gray-400"></span> Promo Berakhir</div>
+               </div>
+           </div>
+
+           <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm p-5 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+               <div>
+                   <h3 class="text-sm font-semibold text-gray-900 mb-2">Status Bar Pengumuman</h3>
+                   <div class="flex items-center gap-3">
+                       <span id="dash-announcement-badge" class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Memuat</span>
+                       <p id="dash-announcement-text" class="text-sm text-gray-500 truncate max-w-[200px] md:max-w-[400px]">...</p>
+                   </div>
+               </div>
+               <button onclick="document.querySelector('[data-target=page-announcement]').click()" class="text-sm text-[#00001A] font-medium hover:underline whitespace-nowrap">Edit Sekarang →</button>
+           </div>
+
+           <div class="bg-white rounded-[12px] border border-gray-200 shadow-sm overflow-hidden">
+               <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+                   <h3 class="font-semibold text-gray-900">Promo Terbaru</h3>
+                   <button onclick="document.querySelector('[data-target=page-promo]').click()" class="text-sm text-[#00001A] hover:underline">Lihat Semua →</button>
+               </div>
+               <div class="overflow-x-auto">
+                   <table class="w-full text-left text-sm whitespace-nowrap">
+                       <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                           <tr>
+                               <th class="px-5 py-3 font-medium">Judul</th>
+                               <th class="px-5 py-3 font-medium">Tipe</th>
+                               <th class="px-5 py-3 font-medium">Status</th>
+                               <th class="px-5 py-3 font-medium text-right">Aksi</th>
+                           </tr>
+                       </thead>
+                       <tbody id="dash-promo-table" class="divide-y divide-gray-100 text-gray-700">
+                           <tr><td colspan="4" class="px-5 py-8 text-center text-gray-400"><div class="loader loader-dark"></div> Memuat...</td></tr>
+                       </tbody>
+                   </table>
+               </div>
+           </div>
+       </div>
+
+       <!-- PAGE: KELOLA PROMO -->
+       <div id="page-promo" class="page-content hidden space-y-6">
+           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+               <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Kelola Promo</h2>
+               <button id="add-promo-btn" class="bg-[#00001A] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black transition-colors w-full sm:w-auto">＋ Tambah Promo Baru</button>
+           </div>
+           
+           <div class="bg-white p-3 rounded-lg border border-gray-200 flex flex-col sm:flex-row gap-3">
+               <input type="text" id="filter-search" placeholder="Cari judul promo..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00001A]">
+               <select id="filter-status" class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#00001A]">
+                   <option value="all">Semua Status</option>
+                   <option value="active">Aktif Tayang</option>
+                   <option value="upcoming">Mendatang</option>
+                   <option value="expired">Berakhir</option>
+               </select>
+           </div>
+
+           <div id="promo-list" class="space-y-3">
+                <div class="text-center py-12"><div class="loader loader-dark"></div></div>
+           </div>
+       </div>
+
+       <!-- PAGE: PENGUMUMAN -->
+       <div id="page-announcement" class="page-content hidden space-y-6">
+           <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Pengumuman</h2>
+           
+           <div class="bg-white p-6 rounded-[12px] border border-gray-200 shadow-sm space-y-6">
+               <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+                   <div>
+                       <h3 class="font-semibold text-gray-900">Status Bar Saat Ini</h3>
+                       <p class="text-sm text-gray-500 mt-1" id="ann-status-desc">Memuat status...</p>
+                   </div>
+                   <div class="flex items-center" id="ann-toggle-container"></div>
+               </div>
+
+               <form id="announcement-form" class="space-y-5">
+                   <div>
+                       <label class="block text-sm font-medium text-gray-700 mb-1">Pesan Pengumuman *</label>
+                       <textarea id="ann-message" required rows="3" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]"></textarea>
+                       <p class="text-xs text-gray-500 mt-1">Pesan yang akan tampil di bar atas website. Bisa pakai emoji.</p>
+                   </div>
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                           <label class="block text-sm font-medium text-gray-700 mb-1">Warna Background</label>
+                           <div class="flex items-center gap-3">
+                               <input type="color" id="ann-bg" value="#D4A843" class="h-8 w-8 rounded cursor-pointer border-0 p-0">
+                               <span class="text-sm font-mono text-gray-500" id="ann-bg-hex">#D4A843</span>
+                           </div>
+                       </div>
+                       <div>
+                           <label class="block text-sm font-medium text-gray-700 mb-1">Warna Teks</label>
+                           <div class="flex items-center gap-3">
+                               <input type="color" id="ann-color" value="#00001A" class="h-8 w-8 rounded cursor-pointer border-0 p-0">
+                               <span class="text-sm font-mono text-gray-500" id="ann-color-hex">#00001A</span>
+                           </div>
+                       </div>
+                   </div>
+                   <div>
+                       <label class="block text-sm font-medium text-gray-700 mb-1">Berlaku Sampai *</label>
+                       <input type="datetime-local" id="ann-expires" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                       <p class="text-xs text-gray-500 mt-1">Bar akan otomatis hilang setelah waktu ini</p>
+                   </div>
+                   
+                   <div class="pt-4 border-t border-gray-100">
+                       <label class="block text-sm font-medium text-gray-700 mb-3">Live Preview di Website</label>
+                       <div id="ann-preview-bar" class="w-full px-4 py-2 text-center text-[13px] tracking-[0.03em] font-medium rounded relative flex items-center justify-center">
+                           <span id="ann-preview-text"></span>
+                           <span class="absolute right-3 opacity-50">✕</span>
+                       </div>
+                   </div>
+
+                   <button type="submit" id="ann-submit-btn" class="w-full bg-[#00001A] text-white font-medium py-2.5 rounded-lg hover:bg-black transition-colors mt-6">Simpan Pengumuman</button>
+               </form>
+           </div>
+       </div>
+
+       <!-- PAGE: PENGATURAN -->
+       <div id="page-settings" class="page-content hidden space-y-6">
+           <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Pengaturan</h2>
+           
+           <div class="bg-white p-6 rounded-[12px] border border-gray-200 shadow-sm max-w-md">
+               <h3 class="font-semibold text-gray-900 mb-4">Ganti Password</h3>
+               <form id="password-form" class="space-y-4">
+                   <div>
+                       <label class="block text-sm font-medium text-gray-700 mb-1">Password Lama</label>
+                       <input type="password" id="pw-old" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                   </div>
+                   <div>
+                       <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+                       <input type="password" id="pw-new" required minlength="8" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                       <p class="text-xs text-gray-500 mt-1">Minimal 8 karakter</p>
+                   </div>
+                   <div>
+                       <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+                       <input type="password" id="pw-confirm" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                   </div>
+                   <button type="submit" id="pw-submit-btn" class="w-full bg-white border border-gray-300 text-gray-700 font-medium py-2 rounded-lg hover:bg-gray-50 transition-colors">Simpan Password Baru</button>
+               </form>
+           </div>
+
+           <div class="bg-white p-6 rounded-[12px] border border-gray-200 shadow-sm max-w-md">
+               <h3 class="font-semibold text-gray-900 mb-2">Informasi Akun & Aplikasi</h3>
+               <div class="space-y-2 text-sm text-gray-600">
+                   <p>Email Login: <span id="settings-email" class="font-medium text-gray-900"></span></p>
+                   <p>Versi Panel: <span class="font-medium text-gray-900">v1.0.0</span></p>
+                   <p class="pt-2 italic text-xs">Panel ini mengelola data promo dan pengumuman yang dihubungkan secara real-time ke website utama NOJ Coffee.</p>
+               </div>
+           </div>
+       </div>
+
+    </main>
+  </div>
+
+  <!-- SLIDE-OVER FORM: KELOLA PROMO -->
+  <div id="promo-slideover-backdrop" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[100] hidden transition-opacity opacity-0 duration-300"></div>
+  <div id="promo-slideover" class="fixed inset-y-0 right-0 w-full md:w-[480px] bg-white shadow-2xl z-[110] noj-admin-slide-panel slide-closed flex flex-col">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h3 id="promo-form-title" class="text-lg font-bold text-gray-900">Tambah Promo</h3>
+          <button id="close-slideover-btn" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6 hide-scrollbar">
+          <form id="promo-form" class="space-y-5">
+              <input type="hidden" id="p-id">
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Judul Promo *</label>
+                  <input type="text" id="p-title" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  <p class="text-[11px] text-gray-500 mt-1">Contoh: Anniversary Special, Promo Lebaran</p>
+              </div>
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                  <input type="text" id="p-subtitle" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  <p class="text-[11px] text-gray-500 mt-1">Contoh: 4 Tahun NOJ Coffee 🎉</p>
+              </div>
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi *</label>
+                  <textarea id="p-desc" required rows="3" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]"></textarea>
+                  <p class="text-[11px] text-gray-500 mt-1">Jelaskan detail promonya. Ini yang dilihat pelanggan.</p>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Promo *</label>
+                      <select id="p-type" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                          <option value="event">Event Khusus</option>
+                          <option value="flash">Flash Sale</option>
+                          <option value="seasonal">Musiman</option>
+                          <option value="loyalty">Loyalty Stamp</option>
+                      </select>
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas Tampil *</label>
+                      <input type="number" id="p-priority" required min="1" value="1" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                      <p class="text-[11px] text-gray-500 mt-1">Angka kecil = tampil duluan.</p>
+                  </div>
+              </div>
+
+              <div id="p-flash-note" class="hidden bg-blue-50 text-blue-800 p-3 rounded-lg text-[13px] border border-blue-100 italic">
+                 ⚡ Promo Flash Sale akan muncul sebagai popup otomatis ke pengunjung website.
+              </div>
+
+              <div id="p-loyalty-wrap" class="hidden">
+                  <label class="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                     Progress Stamp <span id="p-loyalty-val" class="text-[#00001A] font-bold">0/10</span>
+                  </label>
+                  <input type="range" id="p-loyalty" min="0" max="10" value="0" class="w-full accent-[#00001A]">
+                  <p class="text-[11px] text-gray-500 mt-1">Hanya untuk UI/Display visual di website.</p>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Label Diskon *</label>
+                      <input type="text" id="p-discount" required placeholder="Buy 1 Get 1" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Warna Badge</label>
+                      <div class="flex items-center gap-2">
+                          <input type="color" id="p-badge" value="#D4A843" class="h-8 w-8 rounded cursor-pointer border-0 p-0">
+                          <span id="p-badge-preview" class="text-[11px] px-2 py-1 rounded-full text-white" style="background-color: #D4A843">Preview</span>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai *</label>
+                      <input type="datetime-local" id="p-start" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Selesai *</label>
+                      <input type="datetime-local" id="p-end" required class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  </div>
+              </div>
+
+              <div class="border-t border-gray-100 pt-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Kode Promo (Opsional)</label>
+                  <input type="text" id="p-code" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  <p class="text-[11px] text-gray-500 mt-1">Kode voucher untuk disalin</p>
+              </div>
+
+              <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Berlaku untuk Menu</label>
+                  <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex flex-wrap gap-2 items-center" id="p-tags-container">
+                      <input type="text" id="p-tag-input" placeholder="Ketik lalu Enter..." class="bg-transparent text-sm focus:outline-none flex-1 min-w-[120px]">
+                  </div>
+                  <p class="text-[11px] text-gray-500 mt-1">Kosongkan jika berlaku untuk semua. Ketik persis nama menu di website: "Creamy Inanna"</p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-100 pt-4 pb-4">
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Label CTA *</label>
+                      <input type="text" id="p-cta" required value="Klaim via WhatsApp" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  </div>
+                  <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">URL CTA *</label>
+                      <input type="url" id="p-url" required placeholder="https://wa.me/..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#00001A]">
+                  </div>
+              </div>
+          </form>
+      </div>
+      <div class="p-4 border-t border-gray-200 bg-gray-50 flex gap-3 sticky bottom-0">
+          <button type="button" id="promo-cancel-btn" class="flex-1 bg-white border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">Batal</button>
+          <button type="button" id="promo-save-btn" class="flex-[2] bg-[#00001A] text-white py-2.5 rounded-lg text-sm font-medium hover:bg-black transition-colors flex items-center justify-center">Simpan Promo</button>
+      </div>
+  </div>
+
+  <!-- CONFIRMATION DIALOG -->
+  <div id="confirm-dialog" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] hidden items-center justify-center p-4 opacity-0 transition-opacity">
+      <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center transform scale-95 transition-transform duration-200">
+          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500 text-2xl">⚠️</div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Hapus Promo Ini?</h3>
+          <p class="text-sm text-gray-500 mb-6" id="confirm-desc">Promo ini akan dihapus permanen dan tidak bisa dikembalikan.</p>
+          <div class="flex gap-3">
+              <button id="confirm-cancel" class="flex-1 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Batal</button>
+              <button id="confirm-yes" class="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-600 flex justify-center items-center">Ya, Hapus</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed top-20 md:top-6 left-1/2 md:left-auto md:right-6 -translate-x-1/2 md:translate-x-0 z-[1000] flex flex-col gap-2 w-full max-w-[360px] px-4 md:px-0 pointer-events-none"></div>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// DOM Elements
+const els = {
+    loginScreen: document.getElementById('login-screen'),
+    mainApp: document.getElementById('main-app'),
+    loginForm: document.getElementById('login-form'),
+    loginErr: document.getElementById('login-error'),
+    userEmail: document.getElementById('user-email-display'),
+    settingsEmail: document.getElementById('settings-email'),
+    logoutBtn: document.getElementById('logout-btn'),
+    // Nav
+    navItems: document.querySelectorAll('.nav-item'),
+    pages: document.querySelectorAll('.page-content'),
+    sidebar: document.getElementById('sidebar'),
+    sidebarBackdrop: document.getElementById('sidebar-backdrop'),
+    mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+    // slideout
+    slideover: document.getElementById('promo-slideover'),
+    slideoverBackdrop: document.getElementById('promo-slideover-backdrop'),
+    // forms
+    promoForm: document.getElementById('promo-form'),
+    promoSaveBtn: document.getElementById('promo-save-btn'),
+    annForm: document.getElementById('announcement-form'),
+    pwForm: document.getElementById('password-form'),
+    // dialog
+    confirmDialog: document.getElementById('confirm-dialog'),
+    // dash
+    dashTable: document.getElementById('dash-promo-table'),
+    promoList: document.getElementById('promo-list')
+};
+
+let rawPromos = [];
+let applyToItemsData = [];
+let confirmCallback = null;
+
+// UI Utils
+function showToast(title, msg, type = 'info') {
+    const cont = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
+    const icons = { success: '✓', error: '✕', info: 'i' };
+    
+    toast.className = `flex items-start gap-3 bg-white p-4 rounded-xl shadow-lg border border-gray-100 pointer-events-auto ${window.innerWidth >= 768 ? 'toast-desktop' : 'toast-mobile'}`;
+    toast.innerHTML = `
+        <div class="w-6 h-6 rounded-full ${colors[type]} text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">${icons[type]}</div>
+        <div class="flex-1 text-left"><h4 class="text-sm font-bold text-gray-900">${title}</h4><p class="text-xs text-gray-500 mt-0.5">${msg}</p></div>
+        <button class="text-gray-400 hover:text-gray-600">✕</button>
+    `;
+    
+    cont.appendChild(toast);
+    if(cont.children.length > 4) cont.removeChild(cont.firstChild);
+    
+    const closeBtn = toast.querySelector('button');
+    let tOut = setTimeout(() => hideToast(toast), type === 'error' ? 6000 : 4000);
+    closeBtn.onclick = () => { clearTimeout(tOut); hideToast(toast); };
+}
+function hideToast(toast) {
+    toast.style.opacity = '0';
+    toast.style.transform = window.innerWidth >= 768 ? 'translateX(20px)' : 'translateY(-20px)';
+    toast.style.transition = 'all 0.3s';
+    setTimeout(() => toast.remove(), 300);
+}
+
+function transErr(code) {
+    if(code.includes('wrong-password') || code.includes('invalid-credential')) return "Email atau password salah.";
+    if(code.includes('user-not-found')) return "Akun tidak ditemukan.";
+    if(code.includes('too-many-requests')) return "Terlalu banyak percobaan. Coba beberapa menit lagi.";
+    return "Terjadi kesalahan. Silakan coba lagi. " + code;
+}
+
+// Auth Logic
+onAuthStateChanged(auth, user => {
+    if (user) {
+        els.userEmail.textContent = user.email;
+        els.settingsEmail.textContent = user.email;
+        els.loginScreen.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => els.loginScreen.classList.add('hidden'), 300);
+        els.mainApp.classList.remove('hidden');
+        setTimeout(() => els.mainApp.classList.remove('opacity-0'), 50);
+        initData();
+    } else {
+        els.mainApp.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => els.mainApp.classList.add('hidden'), 300);
+        els.loginScreen.classList.remove('hidden');
+        setTimeout(() => els.loginScreen.classList.remove('opacity-0', 'pointer-events-none'), 50);
+    }
+});
+
+els.loginForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="loader"></span> Masuk...';
+    els.loginErr.classList.add('hidden');
+    try {
+        await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+    } catch(err) {
+        els.loginErr.textContent = transErr(err.code);
+        els.loginErr.classList.remove('hidden');
+    }
+    btn.disabled = false; btn.textContent = 'Masuk';
+}
+document.getElementById('toggle-password').onclick = (e) => {
+    const i = document.getElementById('login-password');
+    if(i.type === 'password') { i.type = 'text'; e.target.textContent = '🔒'; }
+    else { i.type = 'password'; e.target.textContent = '👁'; }
+}
+els.logoutBtn.onclick = () => signOut(auth);
+
+// Sidebar Logic
+function navTo(pageId) {
+    els.pages.forEach(p => p.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+    els.navItems.forEach(i => {
+        i.classList.remove('bg-[#F0F0F5]', 'border-l-4', 'border-[#00001A]', 'font-semibold');
+        if(i.dataset.target === pageId) i.classList.add('bg-[#F0F0F5]', 'border-l-4', 'border-[#00001A]', 'font-semibold');
+    });
+    if(window.innerWidth < 768) closeSidebar();
+}
+els.navItems.forEach(i => i.onclick = () => navTo(i.dataset.target));
+els.mobileMenuBtn.onclick = () => {
+    els.sidebar.classList.remove('-translate-x-full');
+    els.sidebarBackdrop.classList.remove('hidden');
+};
+function closeSidebar() {
+    els.sidebar.classList.add('-translate-x-full');
+    els.sidebarBackdrop.classList.add('hidden');
+}
+els.sidebarBackdrop.onclick = closeSidebar;
+
+// Format Utils
+function fmtDate(ts) {
+    if(!ts) return '-';
+    // ts is firestore Timestamp
+    return ts.toDate().toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+function isoDateString(ts) {
+    if(!ts) return '';
+    const d = ts.toDate();
+    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+}
+
+// Data Fetching
+function initData() {
+    // Promos
+    onSnapshot(query(collection(db, "promos"), orderBy("priority", "asc")), (snap) => {
+        rawPromos = [];
+        snap.forEach(d => rawPromos.push({ id: d.id, ...d.data() }));
+        renderDashboard();
+        renderPromoList();
+    });
+
+    // Announcement
+    onSnapshot(doc(db, "announcement", "current"), (d) => {
+        if(d.exists()) renderAnnouncement(d.data());
+    });
+}
+
+function getPromoStatus(p) {
+    const now = new Date().getTime();
+    const start = p.startDate ? p.startDate.toMillis() : 0;
+    const end = p.endDate ? p.endDate.toMillis() : Infinity;
+    if(!p.isActive) return { s:'Nonaktif', c:'bg-gray-100 text-gray-600', val:'inactive' };
+    if(now < start) return { s:'Mendatang', c:'bg-yellow-100 text-yellow-800', val:'upcoming' };
+    if(now > end) return { s:'Berakhir', c:'bg-gray-100 text-gray-500', val:'expired' };
+    return { s:'Aktif', c:'bg-green-100 text-green-800', val:'active' };
+}
+
+function renderDashboard() {
+    const statuses = rawPromos.map(p => getPromoStatus(p).val);
+    document.getElementById('stat-active').textContent = statuses.filter(s=>s==='active').length;
+    document.getElementById('stat-upcoming').textContent = statuses.filter(s=>s==='upcoming').length;
+    document.getElementById('stat-expired').textContent = statuses.filter(s=>s==='expired').length; // simple, not strictly 30 days
+
+    const sortedByDate = [...rawPromos].sort((a,b) => (b.createdAt?.toMillis()||0) - (a.createdAt?.toMillis()||0)).slice(0,5);
+    if(sortedByDate.length===0) {
+        els.dashTable.innerHTML = '<tr><td colspan="4" class="px-5 py-8 text-center text-gray-400">Belum ada promo.</td></tr>';
+    } else {
+        els.dashTable.innerHTML = sortedByDate.map(p => {
+            const st = getPromoStatus(p);
+            return `<tr class="hover:bg-gray-50">
+                <td class="px-5 py-4 font-medium">${p.title}</td>
+                <td class="px-5 py-4 text-gray-500 capitalize">${p.type}</td>
+                <td class="px-5 py-4"><span class="px-2 py-1 rounded text-xs font-medium ${st.c}">${st.s}</span></td>
+                <td class="px-5 py-4 text-right flex gap-3 justify-end items-center text-gray-400">
+                    <button onclick="editPromo('${p.id}')" class="hover:text-[#00001A]">✏️</button>
+                    <button onclick="prepDelete('${p.id}')" class="hover:text-red-500">🗑️</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+}
+
+function renderPromoList() {
+    const search = document.getElementById('filter-search').value.toLowerCase();
+    const statF = document.getElementById('filter-status').value;
+    
+    const filtered = rawPromos.filter(p => {
+        const matchS = p.title.toLowerCase().includes(search);
+        const st = getPromoStatus(p).val;
+        if(statF === 'all') return matchS;
+        if(statF === 'active') return matchS && st==='active';
+        return matchS && st===statF;
+    });
+
+    if(filtered.length === 0) {
+        els.promoList.innerHTML = '<div class="text-center py-12 text-gray-400">Tidak ada promo ditemukan.</div>';
+        return;
+    }
+
+    els.promoList.innerHTML = filtered.map(p => {
+        const st = getPromoStatus(p);
+        const tag = p.applyToItems?.length ? ` · Berlaku untuk: ${p.applyToItems.length} menu` : '';
+        return `
+        <div class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center">
+            <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold text-white tracking-widest" style="background-color: ${p.badgeColor||'#333'}">${p.type}</span>
+                    <h4 class="font-bold text-gray-900">${p.title}</h4>
+                </div>
+                <p class="text-sm text-gray-500 mb-2 truncate max-w-[300px] md:max-w-md">${p.subtitle || p.discountLabel}</p>
+                <div class="text-[11px] text-gray-400 font-medium">
+                    📅 ${fmtDate(p.startDate)} – ${fmtDate(p.endDate)}${tag} · Prioritas: ${p.priority || 1}
+                </div>
+            </div>
+            <div class="flex items-center justify-between w-full md:w-auto gap-6 border-t md:border-t-0 pt-3 md:pt-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs ${st.c} px-2 py-1 rounded font-medium">${st.s}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="relative inline-block w-10 h-5 cursor-pointer">
+                        <input type="checkbox" ${p.isActive?'checked':''} onchange="togglePromoActive('${p.id}', this.checked)" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border appearance-none cursor-pointer"/>
+                        <div class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></div>
+                    </label>
+                    <button onclick="editPromo('${p.id}')" class="text-sm text-gray-500 hover:text-[#00001A]">Edit</button>
+                    <button onclick="prepDelete('${p.id}')" class="text-sm text-red-400 hover:text-red-600">Hapus</button>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+document.getElementById('filter-search').addEventListener('input', renderPromoList);
+document.getElementById('filter-status').addEventListener('change', renderPromoList);
+
+window.togglePromoActive = async (id, val) => {
+    try {
+        await updateDoc(doc(db, "promos", id), { isActive: val });
+        showToast("Disimpan ✓", `Promo ${val?'diaktifkan':'dinonaktifkan'}.`, "success");
+    } catch(e) {
+        showToast("Error", "Gagal update status", "error");
+    }
+}
+
+// ------ PROMO FORM SLIDE OVER ------
+function openSlide() {
+    els.slideoverBackdrop.classList.remove('hidden');
+    setTimeout(() => els.slideoverBackdrop.classList.remove('opacity-0'), 10);
+    els.slideover.classList.remove('slide-closed');
+    els.slideover.classList.add('slide-open');
+}
+function closeSlide() {
+    els.slideover.classList.remove('slide-open');
+    els.slideover.classList.add('slide-closed');
+    els.slideoverBackdrop.classList.add('opacity-0');
+    setTimeout(() => els.slideoverBackdrop.classList.add('hidden'), 300);
+}
+document.getElementById('close-slideover-btn').onclick = closeSlide;
+document.getElementById('promo-cancel-btn').onclick = closeSlide;
+document.getElementById('add-promo-btn').onclick = () => {
+    document.getElementById('promo-form-title').textContent = "Tambah Promo Baru";
+    els.promoForm.reset();
+    document.getElementById('p-id').value = '';
+    applyToItemsData = [];
+    renderTags();
+    togglePromoTypeFields();
+    openSlide();
+}
+
+// Tags
+const tagInput = document.getElementById('p-tag-input');
+const tagCont = document.getElementById('p-tags-container');
+tagInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const v = tagInput.value.trim().replace(',','');
+        if(v && !applyToItemsData.includes(v)) {
+            applyToItemsData.push(v);
+            renderTags();
+        }
+        tagInput.value = '';
+    }
+});
+function renderTags() {
+    const existing = tagCont.querySelectorAll('.p-tag-item');
+    existing.forEach(e => e.remove());
+    applyToItemsData.forEach(t => {
+        const el = document.createElement('div');
+        el.className = 'p-tag-item bg-[#00001A]/10 text-[#00001A] text-xs px-2 py-1 rounded-md flex items-center gap-1';
+        el.innerHTML = `<span>${t}</span><button type="button" class="text-gray-500 hover:text-red-500 font-bold" onclick="removeTag('${t}')">✕</button>`;
+        tagCont.insertBefore(el, tagInput);
+    });
+}
+window.removeTag = (t) => { applyToItemsData = applyToItemsData.filter(x => x!==t); renderTags(); }
+
+// logic form dynamic
+function togglePromoTypeFields() {
+    const t = document.getElementById('p-type').value;
+    document.getElementById('p-flash-note').classList.toggle('hidden', t !== 'flash');
+    document.getElementById('p-loyalty-wrap').classList.toggle('hidden', t !== 'loyalty');
+}
+document.getElementById('p-type').addEventListener('change', togglePromoTypeFields);
+document.getElementById('p-loyalty').addEventListener('input', e => document.getElementById('p-loyalty-val').textContent = e.target.value+'/10');
+document.getElementById('p-badge').addEventListener('input', e => document.getElementById('p-badge-preview').style.backgroundColor = e.target.value);
+
+// Save Promo
+els.promoSaveBtn.onclick = async () => {
+    if(!els.promoForm.checkValidity()) return els.promoForm.reportValidity();
+    
+    const id = document.getElementById('p-id').value;
+    const startObj = document.getElementById('p-start').value;
+    const endObj = document.getElementById('p-end').value;
+    if(new Date(endObj) <= new Date(startObj)) {
+        showToast("Error", "Tanggal selesai harus setelah tanggal mulai.", "error"); return;
+    }
+
+    els.promoSaveBtn.innerHTML = '<span class="loader"></span> Menyimpan...';
+    els.promoSaveBtn.disabled = true;
+
+    const data = {
+        title: document.getElementById('p-title').value,
+        subtitle: document.getElementById('p-subtitle').value,
+        description: document.getElementById('p-desc').value,
+        discountLabel: document.getElementById('p-discount').value,
+        badgeColor: document.getElementById('p-badge').value,
+        startDate: Timestamp.fromDate(new Date(startObj)),
+        endDate: Timestamp.fromDate(new Date(endObj)),
+        applyToItems: applyToItemsData,
+        promoCode: document.getElementById('p-code').value,
+        ctaLabel: document.getElementById('p-cta').value,
+        ctaUrl: document.getElementById('p-url').value,
+        type: document.getElementById('p-type').value,
+        loyaltyProgress: parseInt(document.getElementById('p-loyalty').value),
+        priority: parseInt(document.getElementById('p-priority').value)
+    };
+
+    try {
+        if(id) {
+            await updateDoc(doc(db, "promos", id), data);
+            showToast("Disimpan ✓", "Promo berhasil diperbarui", "success");
+        } else {
+            data.isActive = true; // default on add
+            data.createdAt = serverTimestamp();
+            await addDoc(collection(db, "promos"), data);
+            showToast("Berhasil ✓", "Promo baru sudah tayang di website", "success");
+        }
+        closeSlide();
+    } catch(err) {
+        showToast("Error", "Gagal menyimpan promo", "error");
+    }
+    els.promoSaveBtn.textContent = 'Simpan Promo';
+    els.promoSaveBtn.disabled = false;
+}
+
+window.editPromo = (id) => {
+    const p = rawPromos.find(x => x.id === id);
+    if(!p) return;
+    document.getElementById('promo-form-title').textContent = "Edit Promo";
+    document.getElementById('p-id').value = p.id;
+    document.getElementById('p-title').value = p.title;
+    document.getElementById('p-subtitle').value = p.subtitle || '';
+    document.getElementById('p-desc').value = p.description;
+    
+    document.getElementById('p-type').value = p.type || 'event';
+    document.getElementById('p-priority').value = p.priority || 1;
+    document.getElementById('p-loyalty').value = p.loyaltyProgress || 0;
+    document.getElementById('p-loyalty-val').textContent = (p.loyaltyProgress || 0)+'/10';
+    
+    document.getElementById('p-discount').value = p.discountLabel;
+    document.getElementById('p-badge').value = p.badgeColor || '#D4A843';
+    document.getElementById('p-badge-preview').style.backgroundColor = p.badgeColor || '#D4A843';
+    
+    document.getElementById('p-start').value = isoDateString(p.startDate);
+    document.getElementById('p-end').value = isoDateString(p.endDate);
+    document.getElementById('p-code').value = p.promoCode || '';
+    
+    applyToItemsData = p.applyToItems || [];
+    renderTags();
+    
+    document.getElementById('p-cta').value = p.ctaLabel || 'Klaim via WhatsApp';
+    document.getElementById('p-url').value = p.ctaUrl || '';
+    
+    togglePromoTypeFields();
+    openSlide();
+}
+
+// Dialog
+function showDialog(cb) {
+    confirmCallback = cb;
+    els.confirmDialog.classList.remove('hidden');
+    els.confirmDialog.classList.add('flex');
+    setTimeout(() => {
+        els.confirmDialog.classList.remove('opacity-0');
+        els.confirmDialog.querySelector('div').classList.remove('scale-95');
+    }, 10);
+}
+function hideDialog() {
+    els.confirmDialog.classList.add('opacity-0');
+    els.confirmDialog.querySelector('div').classList.add('scale-95');
+    setTimeout(() => {
+        els.confirmDialog.classList.add('hidden');
+        els.confirmDialog.classList.remove('flex');
+    }, 200);
+}
+document.getElementById('confirm-cancel').onclick = hideDialog;
+document.getElementById('confirm-yes').onclick = () => { if(confirmCallback) confirmCallback(); hideDialog(); }
+
+window.prepDelete = (id) => {
+    showDialog(async () => {
+        try {
+            await deleteDoc(doc(db, "promos", id));
+            showToast("Dihapus", "Promo telah dihapus permanen", "success");
+        } catch(e) { showToast("Error", "Gagal hapus promo", "error"); }
+    });
+}
+
+// ------ PENGUMUMAN ------
+function renderAnnouncement(d) {
+    const isAct = d.isActive && (d.expiresAt ? d.expiresAt.toMillis() > new Date().getTime() : false);
+    document.getElementById('ann-status-desc').textContent = isAct 
+        ? 'Aktif tayang di website.' : 'Tidak ada pengumuman tayang saat ini.';
+    document.getElementById('dash-announcement-badge').className = isAct ? 'px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800' : 'px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600';
+    document.getElementById('dash-announcement-badge').textContent = isAct ? 'Aktif' : 'Tidak Aktif';
+    document.getElementById('dash-announcement-text').textContent = d.message || 'Kosong';
+    
+    const tog = document.createElement('button');
+    tog.className = `px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${isAct ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : 'bg-[#00001A] text-white border-transparent hover:bg-black'}`;
+    tog.textContent = isAct ? 'Matikan Sekarang' : 'Aktifkan';
+    tog.onclick = async () => {
+        try { await updateDoc(doc(db, "announcement", "current"), { isActive: !d.isActive });
+        } catch(e){ showToast("Error", "Gagal ubah status", "error"); }
+    };
+    const c = document.getElementById('ann-toggle-container'); c.innerHTML=''; c.appendChild(tog);
+
+    document.getElementById('ann-message').value = d.message || '';
+    document.getElementById('ann-bg').value = d.bgColor || '#D4A843';
+    document.getElementById('ann-color').value = d.textColor || '#00001A';
+    document.getElementById('ann-bg-hex').textContent = d.bgColor || '#D4A843';
+    document.getElementById('ann-color-hex').textContent = d.textColor || '#00001A';
+    if(d.expiresAt) document.getElementById('ann-expires').value = isoDateString(d.expiresAt);
+    
+    livePreviewAnn();
+}
+
+function livePreviewAnn() {
+    const b = document.getElementById('ann-preview-bar');
+    b.style.backgroundColor = document.getElementById('ann-bg').value;
+    b.style.color = document.getElementById('ann-color').value;
+    document.getElementById('ann-preview-text').textContent = document.getElementById('ann-message').value || 'Pesan kosong...';
+}
+document.getElementById('ann-message').oninput = livePreviewAnn;
+document.getElementById('ann-bg').oninput = (e) => { document.getElementById('ann-bg-hex').textContent = e.target.value; livePreviewAnn(); }
+document.getElementById('ann-color').oninput = (e) => { document.getElementById('ann-color-hex').textContent = e.target.value; livePreviewAnn(); }
+
+els.annForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('ann-submit-btn');
+    btn.innerHTML = '<span class="loader"></span> Menyimpan...'; btn.disabled = true;
+    
+    try {
+        await setDoc(doc(db, "announcement", "current"), {
+            message: document.getElementById('ann-message').value,
+            bgColor: document.getElementById('ann-bg').value,
+            textColor: document.getElementById('ann-color').value,
+            expiresAt: Timestamp.fromDate(new Date(document.getElementById('ann-expires').value)),
+            isActive: true
+        });
+        showToast("Disimpan ✓", "Pengumuman tayang di website", "success");
+    } catch(err) {
+        showToast("Error", "Gagal simpan pengumuman", "error");
+    }
+    btn.textContent = 'Simpan Pengumuman'; btn.disabled = false;
+}
+
+// ------ SETTINGS (PW CHANGE) ------
+els.pwForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const o = document.getElementById('pw-old').value;
+    const n = document.getElementById('pw-new').value;
+    const c = document.getElementById('pw-confirm').value;
+    
+    if(n !== c) { showToast("Gagal", "Konfirmasi password tidak cocok", "error"); return; }
+    
+    const btn = document.getElementById('pw-submit-btn');
+    btn.innerHTML = '<span class="loader loader-dark"></span> Menyimpan...'; btn.disabled = true;
+
+    try {
+        const u = auth.currentUser;
+        const cred = EmailAuthProvider.credential(u.email, o);
+        await reauthenticateWithCredential(u, cred);
+        await updatePassword(u, n);
+        showToast("Sukses", "Password berhasil diubah", "success");
+        els.pwForm.reset();
+    } catch(err) {
+        showToast("Gagal", transErr(err.code), "error");
+    }
+    btn.textContent = 'Simpan Password Baru'; btn.disabled = false;
+}
+
+// Start
+navTo('page-dashboard');
+
+
+</script>
+</body>
+</html>
