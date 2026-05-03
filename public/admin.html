@@ -540,15 +540,23 @@ onAuthStateChanged(auth, user => {
         els.userEmail.textContent = user.email;
         els.settingsEmail.textContent = user.email;
         els.loginScreen.classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => els.loginScreen.classList.add('hidden'), 300);
-        els.mainApp.classList.remove('hidden');
+        setTimeout(() => {
+            els.loginScreen.classList.add('hidden');
+            els.loginScreen.classList.remove('flex');
+        }, 300);
+        els.mainApp.classList.remove('hidden', 'pointer-events-none');
+        els.mainApp.classList.add('flex');
         setTimeout(() => els.mainApp.classList.remove('opacity-0'), 50);
         initData();
     } else {
         els.mainApp.classList.add('opacity-0', 'pointer-events-none');
-        setTimeout(() => els.mainApp.classList.add('hidden'), 300);
-        els.loginScreen.classList.remove('hidden');
-        setTimeout(() => els.loginScreen.classList.remove('opacity-0', 'pointer-events-none'), 50);
+        setTimeout(() => {
+            els.mainApp.classList.add('hidden');
+            els.mainApp.classList.remove('flex');
+        }, 300);
+        els.loginScreen.classList.remove('hidden', 'pointer-events-none');
+        els.loginScreen.classList.add('flex');
+        setTimeout(() => els.loginScreen.classList.remove('opacity-0'), 50);
     }
 });
 
